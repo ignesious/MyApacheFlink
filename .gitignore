@@ -78,4 +78,4 @@ fabric.properties
 
 target/*
 
-flink-pluralsight-course.iml
+*.iml
