@@ -5,14 +5,18 @@ import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.utils.ParameterTool;
 
 public class FilterMoviesBatch {
 
     public static void main(String[] args) {
         ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
+        ParameterTool parameters = ParameterTool.fromArgs(args);
+        String input = parameters.getRequired("input");
+
         DataSet<Tuple3<Long, String, String>> lines = env.readCsvFile(
-            "/Users/mmohideen/Desktop/vmware/flinkcodebase/flink-pluralsight-course/datafiles/ml-latest-small/movies.csv")
+            input)
             .ignoreFirstLine()
             .ignoreInvalidLines()
             .parseQuotedStrings('"')
@@ -41,7 +45,6 @@ public class FilterMoviesBatch {
         } catch (Exception exception) {
             exception.printStackTrace();
         }
-
 
 
     }
