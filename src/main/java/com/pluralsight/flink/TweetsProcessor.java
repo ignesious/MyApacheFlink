@@ -1,15 +1,24 @@
 package com.pluralsight.flink;
 
+import java.util.Date;
 import java.util.Properties;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
+import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
+import org.apache.flink.util.Collector;
+import scala.Tuple3;
 
 public class TweetsProcessor {
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
         Properties props = new Properties();
         props.setProperty(TwitterSource.CONSUMER_KEY, "6wUphMRple2aNV5g78RHqP8AJ");
         props.setProperty(TwitterSource.CONSUMER_SECRET,
@@ -28,6 +37,25 @@ public class TweetsProcessor {
                     entiretweet.get("lang") != null ? entiretweet.get("lang").asText() : "tamil";
                 Tweet tweet = new Tweet(language, text);
                 return tweet;
+            })
+            .keyBy(new KeySelector<Tweet, String>() {
+                @Override
+                public String getKey(Tweet tweet) throws Exception {
+                    return tweet.getLanguage();
+                }
+            })
+            .timeWindow(Time.seconds(10L))
+            .apply(new WindowFunction<Tweet, Tuple3<String, Long, Date>, String, TimeWindow>() {
+                @Override
+                public void apply(String language, TimeWindow timeWindow, Iterable<Tweet> iterable,
+                    Collector<Tuple3<String, Long, Date>> collector) throws Exception {
+
+                    long count = 0L;
+                    for (Tweet tweets : iterable) {
+                        count++;
+                    }
+                    collector.collect(new Tuple3<>(language, count, new Date(timeWindow.getEnd())));
+                }
             })
             .print();
 
