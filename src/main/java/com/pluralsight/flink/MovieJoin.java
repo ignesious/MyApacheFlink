@@ -1,6 +1,5 @@
 package com.pluralsight.flink;
 
-
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.java.DataSet;
@@ -44,29 +43,29 @@ public class MovieJoin {
                         return new Tuple4<>(name, genre, rating, userId);
                     }
                 })
-        .groupBy(0)
-            .reduceGroup(new GroupReduceFunction<Tuple4<String, String, Double, Long>, Tuple2<String,Double>>() {
+            .groupBy(0)
+            .reduceGroup(
+                new GroupReduceFunction<Tuple4<String, String, Double, Long>, Tuple2<String, Double>>() {
 
-                @Override
-                public void reduce(Iterable<Tuple4<String, String, Double, Long>> iterable,
-                    Collector<Tuple2<String, Double>> collector) throws Exception {
+                    @Override
+                    public void reduce(Iterable<Tuple4<String, String, Double, Long>> iterable,
+                        Collector<Tuple2<String, Double>> collector) throws Exception {
 
-                    String movieName = null;
-                    Double totalRating = 0.0;
-                    int count = 0;
+                        String movieName = null;
+                        Double totalRating = 0.0;
+                        int count = 0;
 
-                    for (Tuple4<String, String, Double, Long> joinTuple : iterable){
-                        movieName = joinTuple.f0;
-                        totalRating+=joinTuple.f2;
-                        count++;
+                        for (Tuple4<String, String, Double, Long> joinTuple : iterable) {
+                            movieName = joinTuple.f0;
+                            totalRating += joinTuple.f2;
+                            count++;
+                        }
+
+                        collector.collect(new Tuple2<>(movieName, totalRating / count));
+
                     }
-
-                    collector.collect(new Tuple2<>(movieName,totalRating/count));
-
-                }
-            })
+                })
             .print();
-
 
 
     }
