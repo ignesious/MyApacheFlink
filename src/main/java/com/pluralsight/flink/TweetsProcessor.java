@@ -6,6 +6,7 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.streaming.api.TimeCharacteristic;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
@@ -63,7 +64,7 @@ public class TweetsProcessor {
             .print();*/
 
         // Below is to find the top language in a window
-        env.addSource(new TwitterSource(props))
+        DataStream<Tuple3<String, Long, Date>> input = env.addSource(new TwitterSource(props))
             .map(tweetString -> {
                 JsonNode entiretweet = objectMapper.readTree(tweetString);
                 String text =
@@ -114,8 +115,9 @@ public class TweetsProcessor {
                         }
                         collector.collect(new Tuple3<>(topSpokenlanguage, count, windowDate));
                     }
-                })
-            .print();
+                });
+
+        input.print();
 
         env.execute();
 
