@@ -20,7 +20,7 @@ public class TweetsProcessor {
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
         Properties props = new Properties();
         props.setProperty(TwitterSource.CONSUMER_KEY, "6wUphMRple2aNV5g78RHqP8AJ");
         props.setProperty(TwitterSource.CONSUMER_SECRET,
