@@ -9,6 +9,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
@@ -81,18 +82,31 @@ public class TweetsProcessor {
                 }
             })
             .timeWindow(Time.seconds(10L))
-            .apply(new WindowFunction<Tweet, Tuple3<String, Long, Date>, String, TimeWindow>() {
-                @Override
-                public void apply(String language, TimeWindow timeWindow, Iterable<Tweet> iterable,
-                    Collector<Tuple3<String, Long, Date>> collector) throws Exception {
-
-                    long count = 0L;
-                    for (Tweet tweets : iterable) {
-                        count++;
+            .process(
+                new ProcessWindowFunction<Tweet, Tuple3<String, Long, Date>, String, TimeWindow>() {
+                    @Override
+                    public void process(String s, Context context, Iterable<Tweet> iterable,
+                        Collector<Tuple3<String, Long, Date>> collector) throws Exception {
+                        long count = 0L;
+                        for (Tweet tweets : iterable) {
+                            count++;
+                        }
+                        collector
+                            .collect(new Tuple3<>(s, count, new Date(context.window().getEnd())));
                     }
-                    collector.collect(new Tuple3<>(language, count, new Date(timeWindow.getEnd())));
-                }
-            })
+                })
+//            .apply(new WindowFunction<Tweet, Tuple3<String, Long, Date>, String, TimeWindow>() {
+//                @Override
+//                public void apply(String language, TimeWindow timeWindow, Iterable<Tweet> iterable,
+//                    Collector<Tuple3<String, Long, Date>> collector) throws Exception {
+//
+//                    long count = 0L;
+//                    for (Tweet tweets : iterable) {
+//                        count++;
+//                    }
+//                    collector.collect(new Tuple3<>(language, count, new Date(timeWindow.getEnd())));
+//                }
+//            })
             .timeWindowAll(Time.seconds(10L))
             .apply(
                 new AllWindowFunction<Tuple3<String, Long, Date>, Tuple3<String, Long, Date>, TimeWindow>() {
